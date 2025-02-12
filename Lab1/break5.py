@@ -1,47 +1,42 @@
 import hashlib
-import time 
+import time
 import subprocess
 
+#hash function, so we keep testPass in tact
+def hash_password(password):
+    h = hashlib.sha256()
+    h.update(password.encode('utf-8'))
+    return h.hexdigest()
 
-h = hashlib.sha256()
-hashed_guess = h.hexdigest()
+
+#open all files, organize data
+with open("HashedPWs", "r") as file:
+    PWCred = {line.strip().split(",")[0]: line.strip().split(",")[1] for line in file}
+
+with open("gang", "r") as fileUser:
+    #usernameGang = [line.strip() for line in fileUser]
+    member = "StarRedWolf267"
+    
+with open("PwnedPWs100k", "r") as PW100K:
+    Commonpass = [line.strip() for line in PW100K]
 
 
-file = open("HashedPWs", "r")
 start = time.time()
 
-fileUser = open("gang", "r")
-usernameGang = [line.strip() for line in fileUser]
+# try cracking Passwords
+for Pass in Commonpass:
+    for i in range(100):  # 00 to 99
+        testPass = Pass + f"{i:02d}"  
 
-PWCred = {}
-KnownPasswords = ["iloveyou", "12345678", "QLnpsRxA" ]
-hashedKnown = {}
+        # Check for a match in HashedPWs
+        if member and PWCred[member] == hash_password(testPass):
+                print(f"Password found for {member}: {testPass}")
 
-#for suffix in 
-#   itertools.product("0123456789", repeat=2)
+                check = subprocess.run(["python3", "Login.pyc", member, hash_password(testPass)], capture_output=True, text=True)
 
-for Pass in KnownPasswords:
-    hashedKnown[Pass] = h.update(bytes(Pass, 'utf-8'))
-
-print(hashedKnown)
-
-for line in file:
-    user, Password = line.strip().split(",")
-    PWCred[user] = Password
-
-
-for username in usernameGang:
-    try:
-        PWCred[username]
-    except KeyError as e:
-        continue
-
-    print(f"Password test for {username}: {hashed_guess}")
-    check = subprocess.run(["python3", "Login.pyc", username, hashed_guess], capture_output=True, text=True)
-
-    if "Login successful." in check.stdout:
-            print(f"Password found for {username}: {hashed_guess}")
-         
+                if "Login successful." in check.stdout:
+                    print(f"CONFIRMED:{member} used {testPass}")
+                break 
 
 end = time.time()
 tot  =  end - start
